@@ -157,7 +157,9 @@ class StableDiffusion(nn.Module):
                 viz_images = torch.cat([pred_rgb_512, result_noisier_image, result_hopefully_less_noisy_image],dim=0)
                 save_image(viz_images, save_guidance_path)
 
+        # latents 아무 의미 없고 그냥 shape 맞춰주는 용인줄 알았는데 loss 받음
         targets = (latents - grad).detach()
+        # 그냥 grad의 제곱이 loss임
         loss = 0.5 * F.mse_loss(latents.float(), targets, reduction='sum') / latents.shape[0]
 
         return loss
@@ -224,11 +226,11 @@ class StableDiffusion(nn.Module):
                 # see zero123_utils.py's version for a simpler implementation.
                 alphas = self.scheduler.alphas.to(latents)
                 total_timesteps = self.max_step - self.min_step + 1
-                index = total_timesteps - t.to(latents.device) - 1 
+                index = total_timesteps - t.to(latents.device) - 1
                 b = len(noise_pred)
                 a_t = alphas[index].reshape(b,1,1,1).to(self.device)
                 sqrt_one_minus_alphas = torch.sqrt(1 - alphas)
-                sqrt_one_minus_at = sqrt_one_minus_alphas[index].reshape((b,1,1,1)).to(self.device)                
+                sqrt_one_minus_at = sqrt_one_minus_alphas[index].reshape((b,1,1,1)).to(self.device)
                 pred_x0 = (latents_noisy - sqrt_one_minus_at * noise_pred) / a_t.sqrt() # current prediction for x_0
                 result_hopefully_less_noisy_image = self.decode_latents(pred_x0.to(latents.type(self.precision_t)))
 
